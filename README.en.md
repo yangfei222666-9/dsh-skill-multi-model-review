@@ -48,3 +48,15 @@ python3 -m unittest discover -s tests -v
 ```
 
 MIT License
+
+## Disagreement policy (not majority vote)
+
+All four reviewers are LLMs and may share blind spots — agreement does not create truth. When verdicts conflict: (1) every suggestion is reviewed one by one against local evidence; (2) adoption requires a concrete change plus a receipt; (3) rejections are logged with reasons. Local evidence always wins over quorum.
+
+## Configuring Codex
+
+Codex runs through the local Codex CLI (`codex exec`) using the machine's Pro membership; no key is stored by this project. If Codex is unavailable, the pipeline records a transport failure and the remaining three channels still run.
+
+## Failure handling
+
+A provider transport failure (401/403/404/timeout) is recorded in the review file and provider-usage ledger; the run continues with the remaining providers and never fails the whole review silently.
