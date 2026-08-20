@@ -180,7 +180,13 @@ def main():
                 print(f"✅ {name}/{model}/{tname}: 已评审(输入 {tin} / 输出 {tout} token, 成本 ${cost})")
             except Exception as e:
                 msg = str(e)[:120]
-                print(f"❌ {name}: {type(e).__name__}: {msg}")
+                if "exit" in msg.lower() or "claude exit" in msg.lower() or "codex exit" in msg.lower():
+                    stage = "执行"
+                elif "HTTP" in msg or "timed out" in msg.lower() or "Timeout" in type(e).__name__:
+                    stage = "传输"
+                else:
+                    stage = "生成"
+                print(f"❌ {name} [{stage}]: {type(e).__name__}: {msg}")
     if rows:
         path = os.path.join(args.out, f"reviews-{ts[:16].replace(':','-')}.jsonl")
         with open(path, "w", encoding="utf-8") as f:
