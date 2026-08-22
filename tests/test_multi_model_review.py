@@ -180,7 +180,7 @@ class TestProviderFallbacks(unittest.TestCase):
     def test_gemini_missing_key_skips_in_main_loop(self):
         # PROVIDERS 表:gemini 需要 GEMINI_API_KEY;未配置时 main 循环跳过(表结构断言)
         names = [p[0] for p in mmr.PROVIDERS]
-        self.assertEqual(names, ["glm", "claude", "gemini", "codex"])
+        self.assertEqual(names, ["glm", "claude", "gemini", "codex", "kimi", "ollama", "openrouter"])
         gemini_entry = next(p for p in mmr.PROVIDERS if p[0] == "gemini")
         self.assertEqual(gemini_entry[1], "GEMINI_API_KEY")
 
