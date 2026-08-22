@@ -134,6 +134,35 @@ def call_ollama(env, content):
             continue
     raise last_err
 
+def call_openrouter(env, content):
+    # 第七视角:OpenRouter stealth/ox-alpha("牛来",限时免费,1M 上下文)。
+    # ⚠️ 厂商身份未明+经 OpenRouter 中转:敏感档案不送此通道(评审对象先过用户)。
+    key = env.get("OPENROUTER_API_KEY")
+    base = "https://openrouter.ai/api/v1"
+    models = [m.strip() for m in (env.get("OPENROUTER_MODEL") or "stealth/ox-alpha").split(",") if m.strip()]
+    last_err = None
+    for model in models:
+        try:
+            d = http_post_json(f"{base}/chat/completions",
+                {"Authorization": f"Bearer {key}", "X-Title": "xiaojiu-ops-review"},
+                {"model": model, "temperature": 1, "max_tokens": 2000,
+                 "messages": [{"role": "system", "content": SYSTEM},
+                              {"role": "user", "content": content[:MAX_CHARS]}]},
+                timeout=300)
+            if "choices" not in d:
+                raise RuntimeError(f"响应异常: {json.dumps(d, ensure_ascii=False)[:200]}")
+            usage = d.get("usage", {})
+            msg = d["choices"][0]["message"].get("content") or ""
+            if not msg.strip():
+                raise RuntimeError("空回复,换下一模型")
+            return msg, model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), 0.0
+        except Exception as e:
+            last_err = e
+            if "401" in str(e) or "402" in str(e):
+                raise
+            continue
+    raise last_err
+
 def call_claude_cli(env, content, workdir):
     binpath = env.get("CLAUDE_BIN") or CLAUDE_BIN_DEFAULT
     base = env.get("CLAUDE_RELAY_BASE") or ""
@@ -189,6 +218,7 @@ PROVIDERS = [
     ("codex",  None,                call_codex),
     ("kimi",   "MOONSHOT_API_KEY",  call_kimi),
     ("ollama", None,                call_ollama),
+    ("openrouter", "OPENROUTER_API_KEY", call_openrouter),
 ]
 
 def main():
