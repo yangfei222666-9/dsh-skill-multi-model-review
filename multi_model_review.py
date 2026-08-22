@@ -93,6 +93,25 @@ def call_gemini(env, content):
             continue
     raise last_err
 
+def call_kimi(env, content):
+    # 第五视角:Moonshot Kimi K3。默认国际版 base;大陆账号可设 MOONSHOT_BASE=https://api.moonshot.cn/v1
+    key = env.get("MOONSHOT_API_KEY")
+    base = env.get("MOONSHOT_BASE") or "https://api.moonshot.ai/v1"
+    models = [m.strip() for m in (env.get("MOONSHOT_MODEL") or "kimi-k3").split(",") if m.strip()]
+    last_err = None
+    for model in models:
+        try:
+            text, usage = post_openai_compat(base, key, model, content)
+            if not (text or "").strip():
+                raise RuntimeError("空回复,换下一模型")
+            return text, model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), 0.0
+        except Exception as e:
+            last_err = e
+            if "401" in str(e):
+                raise
+            continue
+    raise last_err
+
 def call_claude_cli(env, content, workdir):
     binpath = env.get("CLAUDE_BIN") or CLAUDE_BIN_DEFAULT
     base = env.get("CLAUDE_RELAY_BASE") or ""
@@ -146,6 +165,7 @@ PROVIDERS = [
     ("claude", "CLAUDE_RELAY_KEY",  call_claude_cli),
     ("gemini", "GEMINI_API_KEY",    call_gemini),
     ("codex",  None,                call_codex),
+    ("kimi",   "MOONSHOT_API_KEY",  call_kimi),
 ]
 
 def main():
