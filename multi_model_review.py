@@ -73,7 +73,7 @@ def call_glm(env, content):
             if "401" in str(e):
                 raise
             continue
-    raise last_err
+    raise (last_err or RuntimeError("provider 无可用模型,检查配置"))
 
 def call_gemini(env, content):
     key = env.get("GEMINI_API_KEY")
@@ -91,7 +91,7 @@ def call_gemini(env, content):
             if "401" in str(e):
                 raise
             continue
-    raise last_err
+    raise (last_err or RuntimeError("provider 无可用模型,检查配置"))
 
 def call_kimi(env, content):
     # 第五视角:Moonshot Kimi K3。默认国际版 base;大陆账号可设 MOONSHOT_BASE=https://api.moonshot.cn/v1
@@ -111,7 +111,7 @@ def call_kimi(env, content):
             if "401" in str(e):
                 raise
             continue
-    raise last_err
+    raise (last_err or RuntimeError("provider 无可用模型,检查配置"))
 
 def call_ollama(env, content):
     # 第六视角:本地 Ollama(零成本、离线、数据不出门)。默认 qwen3.8:27b-mlx,兜底 qwen3:30b-instruct
@@ -132,7 +132,7 @@ def call_ollama(env, content):
         except Exception as e:
             last_err = e
             continue
-    raise last_err
+    raise (last_err or RuntimeError("provider 无可用模型,检查配置"))
 
 def call_openrouter(env, content):
     # 第七视角:OpenRouter stealth/ox-alpha("牛来",限时免费,1M 上下文)。
@@ -161,7 +161,7 @@ def call_openrouter(env, content):
             if "401" in str(e) or "402" in str(e):
                 raise
             continue
-    raise last_err
+    raise (last_err or RuntimeError("provider 无可用模型,检查配置"))
 
 def call_claude_cli(env, content, workdir):
     binpath = env.get("CLAUDE_BIN") or CLAUDE_BIN_DEFAULT
