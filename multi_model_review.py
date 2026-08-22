@@ -113,6 +113,27 @@ def call_kimi(env, content):
             continue
     raise last_err
 
+def call_ollama(env, content):
+    # 第六视角:本地 Ollama(零成本、离线、数据不出门)。默认 qwen3.8:27b-mlx,兜底 qwen3:30b-instruct
+    base = env.get("OLLAMA_BASE_URL") or "http://127.0.0.1:11434"
+    models = [m.strip() for m in (env.get("OLLAMA_MODEL") or "qwen3.8:27b-mlx,qwen3:30b-instruct").split(",") if m.strip()]
+    last_err = None
+    for model in models:
+        try:
+            d = http_post_json(f"{base.rstrip('/')}/api/chat", {},
+                {"model": model, "stream": False,
+                 "messages": [{"role": "system", "content": SYSTEM},
+                              {"role": "user", "content": content[:MAX_CHARS]}]},
+                timeout=600)
+            text = (d.get("message") or {}).get("content") or ""
+            if not text.strip():
+                raise RuntimeError("空回复,换下一模型")
+            return text, model, d.get("prompt_eval_count", 0), d.get("eval_count", 0), 0.0
+        except Exception as e:
+            last_err = e
+            continue
+    raise last_err
+
 def call_claude_cli(env, content, workdir):
     binpath = env.get("CLAUDE_BIN") or CLAUDE_BIN_DEFAULT
     base = env.get("CLAUDE_RELAY_BASE") or ""
@@ -167,6 +188,7 @@ PROVIDERS = [
     ("gemini", "GEMINI_API_KEY",    call_gemini),
     ("codex",  None,                call_codex),
     ("kimi",   "MOONSHOT_API_KEY",  call_kimi),
+    ("ollama", None,                call_ollama),
 ]
 
 def main():
