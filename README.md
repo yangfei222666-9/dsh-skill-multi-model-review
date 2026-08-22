@@ -1,5 +1,9 @@
 # DSH Skill: multi-model-review
 
+> **痛点**:单一模型评审自己的产出,等于自我背书。
+> **解法**:GLM / Claude / Gemini / Codex 四视角独立评审,输出带 verdict 的 JSON + token 成本记账;结果只作 `candidate_review_input`,永不替代本地证据。
+> **证据**:17 个测试全绿,CI 绿,零第三方依赖。
+
 让 DeepSeek Harness 的 agent 拥有「四视角候选评审」能力:智谱 GLM / Claude(CLI 无头,可走中转站)/ Google Gemini / Codex 四通道评审你的成长 artifact,输出带 verdict 的 JSON,并自动记账 token 与成本。
 
 - **零第三方依赖**(Python 标准库),任何 python3 可跑
