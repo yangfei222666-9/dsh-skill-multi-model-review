@@ -101,8 +101,8 @@ def call_kimi(env, content):
     last_err = None
     for model in models:
         try:
-            # kimi-k3 为纯推理模型,API 只接受 temperature=1
-            text, usage = post_openai_compat(base, key, model, content, temperature=1)
+            # kimi-k3 为纯推理模型,API 只接受 temperature=1;长文评审给足 300s(短句 20s,长文需数分钟)
+            text, usage = post_openai_compat(base, key, model, content, temperature=1, timeout=300)
             if not (text or "").strip():
                 raise RuntimeError("空回复,换下一模型")
             return text, model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), 0.0
