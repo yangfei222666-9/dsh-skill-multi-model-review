@@ -42,10 +42,10 @@ def http_post_json(url, headers, body, timeout=60):
         raise RuntimeError(f"HTTP {e.code}: {raw[:200]}") from e
     return json.loads(raw)
 
-def post_openai_compat(base, key, model, content, timeout=60, max_out=2000, completion_key="max_tokens"):
+def post_openai_compat(base, key, model, content, timeout=60, max_out=2000, completion_key="max_tokens", temperature=0.3):
     d = http_post_json(f"{base.rstrip('/')}/chat/completions",
         {"Authorization": f"Bearer {key}"},
-        {"model": model, "temperature": 0.3, completion_key: max_out,
+        {"model": model, "temperature": temperature, completion_key: max_out,
          "messages": [{"role": "system", "content": SYSTEM},
                       {"role": "user", "content": content[:MAX_CHARS]}]},
         timeout=timeout)
@@ -101,7 +101,8 @@ def call_kimi(env, content):
     last_err = None
     for model in models:
         try:
-            text, usage = post_openai_compat(base, key, model, content)
+            # kimi-k3 为纯推理模型,API 只接受 temperature=1
+            text, usage = post_openai_compat(base, key, model, content, temperature=1)
             if not (text or "").strip():
                 raise RuntimeError("空回复,换下一模型")
             return text, model, usage.get("prompt_tokens", 0), usage.get("completion_tokens", 0), 0.0
