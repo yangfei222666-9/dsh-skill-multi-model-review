@@ -49,8 +49,8 @@ def post_openai_compat(base, key, model, content, timeout=60, max_out=2000, comp
          "messages": [{"role": "system", "content": SYSTEM},
                       {"role": "user", "content": content[:MAX_CHARS]}]},
         timeout=timeout)
-    if "choices" not in d:
-        raise RuntimeError(f"响应异常: {json.dumps(d, ensure_ascii=False)[:200]}")
+    if "choices" not in d or not d.get("choices"):
+        raise RuntimeError(f"响应异常(无 choices): {json.dumps(d, ensure_ascii=False)[:200]}")
     usage = d.get("usage", {})
     msg = d["choices"][0]["message"].get("content") or ""
     if isinstance(msg, list):
@@ -209,7 +209,10 @@ def call_codex(env, content, workdir):
         raise RuntimeError(f"codex exit {r.returncode}: {(r.stderr or '').strip()[:120]}")
     m = re.search(r"(?:tokens used|total tokens)\s*:?\s*([\d,]+)", r.stderr or "", re.IGNORECASE)
     tout = int(m.group(1).replace(",", "")) if m else 0
-    return r.stdout.strip()[:6000], "codex(default)", len(prompt) // 4, tout, 0.0
+    out = r.stdout.strip()
+    if not out:
+        raise RuntimeError("codex 空输出(超时或静默退出)")
+    return out[:6000], "codex(default)", len(prompt) // 4, tout, 0.0
 
 PROVIDERS = [
     ("glm",    "ZHIPUAI_API_KEY",   call_glm),
@@ -231,7 +234,13 @@ def main():
     env = load_env(args.env)
     os.makedirs(args.out, exist_ok=True)
     if args.targets:
-        targets = [(os.path.basename(t), open(t, encoding="utf-8").read()[-8000:]) for t in args.targets]
+        targets = []
+        for t in args.targets:
+            if not os.path.isfile(t):
+                print(f"⚠️ 目标不存在,跳过: {t}")
+                continue
+            with open(t, encoding="utf-8") as f:
+                targets.append((os.path.basename(t), f.read()[-8000:]))
     else:
         art = env.get("ARTIFACT_DIR") or "."
         targets = []
