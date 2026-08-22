@@ -78,7 +78,7 @@ def call_glm(env, content):
 def call_gemini(env, content):
     key = env.get("GEMINI_API_KEY")
     base = env.get("GEMINI_BASE") or "https://generativelanguage.googleapis.com/v1beta/openai"
-    models = [m.strip() for m in (env.get("GEMINI_MODEL") or "gemini-3.1-pro-preview,gemini-3.7-flash,gemini-2.5-pro").split(",") if m.strip()]
+    models = [m.strip() for m in (env.get("GEMINI_MODEL") or "gemini-3.1-pro-preview,gemini-3.7-flash").split(",") if m.strip()]
     last_err = None
     for model in models:
         try:
